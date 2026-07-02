@@ -1,0 +1,38 @@
+apiVersion: networking.k8s.io/v1
+kind: Ingress
+metadata:
+  name: ntsistemas-web-app
+  namespace: ntsistemas-web
+  labels:
+    app: ntsistemas-web-app
+  annotations:
+    traefik.ingress.kubernetes.io/router.entrypoints: websecure
+    traefik.ingress.kubernetes.io/router.tls: "true"
+    traefik.ingress.kubernetes.io/router.tls.certresolver: letsencrypt
+spec:
+  ingressClassName: traefik
+  tls:
+    - hosts:
+        - ntsistemasweb.com.br
+        - www.ntsistemasweb.com.br
+  rules:
+    - host: ntsistemasweb.com.br
+      http:
+        paths:
+          - path: /
+            pathType: Prefix
+            backend:
+              service:
+                name: ntsistemas-web-app
+                port:
+                  number: 80
+    - host: www.ntsistemasweb.com.br
+      http:
+        paths:
+          - path: /
+            pathType: Prefix
+            backend:
+              service:
+                name: ntsistemas-web-app
+                port:
+                  number: 80

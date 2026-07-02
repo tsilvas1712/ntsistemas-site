@@ -1,0 +1,282 @@
+name: Build e Publicação Site
+
+on:
+  pull_request:
+    branches: [main]
+    types: [opened, synchronize, reopened, ready_for_review]
+  push:
+    branches: [main]
+  workflow_dispatch:
+
+jobs:
+  quality:
+    name: Quality Checks
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Clonar o repositório
+        uses: actions/checkout@v4
+        with:
+          ref: ${{ github.event_name == 'pull_request' && github.event.pull_request.head.sha || github.sha }}
+
+      - name: Configurar Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+          cache-dependency-path: package-lock.json
+
+      - name: Instalar dependências
+        run: npm ci
+
+      - name: Build do frontend
+        run: npm run build
+
+  build-and-push-hml:
+    name: Build e Push da Imagem (HML)
+    runs-on: ubuntu-latest
+    needs: quality
+    permissions:
+      contents: read
+      packages: write
+    outputs:
+      image: ${{ steps.image.outputs.name }}
+      tag: ${{ steps.image-tag.outputs.tag }}
+
+    steps:
+      - name: Clonar o repositório
+        uses: actions/checkout@v4
+        with:
+          ref: ${{ github.event_name == 'pull_request' && github.event.pull_request.head.sha || github.sha }}
+
+      - name: Configurar Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+          cache-dependency-path: package-lock.json
+
+      - name: Instalar dependências
+        run: npm ci
+
+      - name: Build do frontend
+        run: npm run build
+
+      - name: Configurar Docker Buildx
+        uses: docker/setup-buildx-action@v3
+
+      - name: Autenticar no GHCR
+        uses: docker/login-action@v3
+        with:
+          registry: ghcr.io
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Definir nome da imagem em minúsculas
+        id: image
+        run: echo "name=ghcr.io/${GITHUB_REPOSITORY,,}" >> "$GITHUB_OUTPUT"
+
+      - name: Definir tag da imagem (HML)
+        id: image-tag
+        run: |
+          if [ "${{ github.event_name }}" = "pull_request" ]; then
+            SHORT_SHA="$(echo "${{ github.event.pull_request.head.sha }}" | cut -c1-7)"
+            echo "tag=sha-${SHORT_SHA}" >> "$GITHUB_OUTPUT"
+          else
+            echo "tag=hml" >> "$GITHUB_OUTPUT"
+          fi
+
+      - name: Info da branch (PR)
+        if: github.event_name == 'pull_request'
+        run: |
+          echo "PR #${{ github.event.pull_request.number }}"
+          echo "Branch: ${{ github.head_ref }}"
+          echo "Commit: ${{ github.event.pull_request.head.sha }}"
+          echo "Imagem HML: ${{ steps.image.outputs.name }}:${{ steps.image-tag.outputs.tag }}"
+
+      - name: Extrair metadados
+        id: meta
+        uses: docker/metadata-action@v5
+        with:
+          images: ${{ steps.image.outputs.name }}
+          tags: |
+            type=raw,value=${{ steps.image-tag.outputs.tag }}
+            type=raw,value=pr-${{ github.event.pull_request.number }},enable=${{ github.event_name == 'pull_request' }}
+            type=sha,prefix=sha-,format=short
+
+      - name: Construir e enviar a imagem
+        uses: docker/build-push-action@v6
+        with:
+          context: .
+          push: true
+          tags: ${{ steps.meta.outputs.tags }}
+          labels: ${{ steps.meta.outputs.labels }}
+
+  build-and-push-prd:
+    name: Build e Push da Imagem (Produção)
+    runs-on: ubuntu-latest
+    needs: quality
+    if: github.event_name != 'pull_request'
+    permissions:
+      contents: read
+      packages: write
+    outputs:
+      image: ${{ steps.image.outputs.name }}
+      tag: ${{ steps.image-tag.outputs.tag }}
+
+    steps:
+      - name: Clonar o repositório
+        uses: actions/checkout@v4
+
+      - name: Configurar Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+          cache-dependency-path: package-lock.json
+
+      - name: Instalar dependências
+        run: npm ci
+
+      - name: Build do frontend
+        run: npm run build
+
+      - name: Configurar Docker Buildx
+        uses: docker/setup-buildx-action@v3
+
+      - name: Autenticar no GHCR
+        uses: docker/login-action@v3
+        with:
+          registry: ghcr.io
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Definir nome da imagem em minúsculas
+        id: image
+        run: echo "name=ghcr.io/${GITHUB_REPOSITORY,,}" >> "$GITHUB_OUTPUT"
+
+      - name: Definir tag da imagem (Produção)
+        id: image-tag
+        run: echo "tag=main" >> "$GITHUB_OUTPUT"
+
+      - name: Extrair metadados
+        id: meta
+        uses: docker/metadata-action@v5
+        with:
+          images: ${{ steps.image.outputs.name }}
+          tags: |
+            type=raw,value=main
+
+      - name: Construir e enviar a imagem
+        uses: docker/build-push-action@v6
+        with:
+          context: .
+          push: true
+          tags: ${{ steps.meta.outputs.tags }}
+          labels: ${{ steps.meta.outputs.labels }}
+
+  deploy-hml:
+    name: Deploy Kubernetes (HML)
+    runs-on: ubuntu-latest
+    needs: build-and-push-hml
+    if: always() && needs.build-and-push-hml.result == 'success'
+    concurrency:
+      group: deploy-ntsistemas-web-hml-${{ github.event.pull_request.number || github.sha }}
+      cancel-in-progress: true
+    permissions:
+      contents: read
+      packages: read
+
+    steps:
+      - name: Clonar o repositório
+        uses: actions/checkout@v4
+        with:
+          ref: ${{ github.event_name == 'pull_request' && github.event.pull_request.head.sha || github.sha }}
+
+      - name: Instalar kubectl
+        uses: azure/setup-kubectl@v4
+
+      - name: Configurar kubeconfig
+        run: |
+          mkdir -p "$HOME/.kube"
+          KUBE_RAW="${{ secrets.KUBE_CONFIG_DATA }}"
+          if printf '%s' "$KUBE_RAW" | grep -q "apiVersion"; then
+            printf '%s' "$KUBE_RAW" > "$HOME/.kube/config"
+          else
+            printf '%s' "$KUBE_RAW" | base64 -d > "$HOME/.kube/config"
+          fi
+          chmod 600 "$HOME/.kube/config"
+
+      - name: Info do deploy em homologação
+        if: github.event_name == 'pull_request'
+        run: |
+          echo "Deploy HML da branch '${{ github.head_ref }}' (commit ${{ github.event.pull_request.head.sha }})"
+
+      - name: Variáveis do deploy (HML)
+        run: |
+          echo "DEPLOY_IMAGE=${{ needs.build-and-push-hml.outputs.image }}:${{ needs.build-and-push-hml.outputs.tag }}" >> "$GITHUB_ENV"
+          echo "DEPLOY_NAMESPACE=ntsistemas-web-hml" >> "$GITHUB_ENV"
+          echo "DEPLOY_MANIFESTS_DIR=k8s/hml" >> "$GITHUB_ENV"
+          echo "DEPLOY_PLACEHOLDER_IMAGE=ghcr.io/tsilvas1712/ntsistemas-site:hml" >> "$GITHUB_ENV"
+
+      - name: Preparar namespace (HML)
+        env:
+          GHCR_USERNAME: ${{ github.actor }}
+          GHCR_PASSWORD: ${{ secrets.GHCR_PAT }}
+        run: |
+          chmod +x scripts/k8s-deploy.sh
+          ./scripts/k8s-deploy.sh bootstrap "$DEPLOY_NAMESPACE"
+
+      - name: Deploy da aplicação (HML)
+        run: |
+          ./scripts/k8s-deploy.sh deploy \
+            "$DEPLOY_NAMESPACE" \
+            "$DEPLOY_IMAGE" \
+            "$DEPLOY_MANIFESTS_DIR" \
+            hml-ntsistemas-web-app \
+            "$DEPLOY_PLACEHOLDER_IMAGE"
+
+  deploy-prd:
+    name: Deploy Kubernetes (Produção)
+    runs-on: ubuntu-latest
+    needs: [build-and-push-prd, deploy-hml]
+    if: github.event_name != 'pull_request' && (github.event_name == 'push' || github.event_name == 'workflow_dispatch')
+    environment: production
+    concurrency:
+      group: deploy-ntsistemas-web-production
+      cancel-in-progress: true
+    permissions:
+      contents: read
+      packages: read
+
+    steps:
+      - name: Clonar o repositório
+        uses: actions/checkout@v4
+
+      - name: Instalar kubectl
+        uses: azure/setup-kubectl@v4
+
+      - name: Configurar kubeconfig
+        run: |
+          mkdir -p "$HOME/.kube"
+          KUBE_RAW="${{ secrets.KUBE_CONFIG_DATA }}"
+          if printf '%s' "$KUBE_RAW" | grep -q "apiVersion"; then
+            printf '%s' "$KUBE_RAW" > "$HOME/.kube/config"
+          else
+            printf '%s' "$KUBE_RAW" | base64 -d > "$HOME/.kube/config"
+          fi
+          chmod 600 "$HOME/.kube/config"
+
+      - name: Deploy em produção
+        env:
+          GHCR_USERNAME: ${{ github.actor }}
+          GHCR_PASSWORD: ${{ secrets.GHCR_PAT }}
+        run: |
+          IMAGE="${{ needs.build-and-push-prd.outputs.image }}:${{ needs.build-and-push-prd.outputs.tag }}"
+          chmod +x scripts/k8s-deploy.sh
+          ./scripts/k8s-deploy.sh all \
+            ntsistemas-web \
+            "$IMAGE" \
+            k8s \
+            ntsistemas-web-app \
+            ghcr.io/tsilvas1712/ntsistemas-site:main

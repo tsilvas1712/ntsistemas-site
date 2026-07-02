@@ -1,0 +1,44 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: hml-ntsistemas-web-app
+  namespace: ntsistemas-web-hml
+  labels:
+    app: hml-ntsistemas-web-app
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: hml-ntsistemas-web-app
+  template:
+    metadata:
+      labels:
+        app: hml-ntsistemas-web-app
+    spec:
+      imagePullSecrets:
+        - name: ghcr-pull
+      containers:
+        - name: app
+          image: ghcr.io/tsilvas1712/ntsistemas-site:hml
+          imagePullPolicy: Always
+          ports:
+            - containerPort: 80
+          resources:
+            requests:
+              cpu: "50m"
+              memory: "64Mi"
+            limits:
+              cpu: "250m"
+              memory: "128Mi"
+          readinessProbe:
+            httpGet:
+              path: /
+              port: 80
+            initialDelaySeconds: 5
+            periodSeconds: 10
+          livenessProbe:
+            httpGet:
+              path: /
+              port: 80
+            initialDelaySeconds: 10
+            periodSeconds: 20
