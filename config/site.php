@@ -19,7 +19,7 @@ return [
     'defaults' => [
         'contact_email' => env('SITE_CONTACT_EMAIL', 'contato@ntsistemasweb.com.br'),
         'notification_email' => env('SITE_NOTIFICATION_EMAIL', env('SITE_CONTACT_EMAIL', 'contato@ntsistemasweb.com.br')),
-        'whatsapp' => env('SITE_WHATSAPP', ''),
+        'whatsapp' => env('SITE_WHATSAPP') ?: '5551995492191',
         'github_url' => env('SITE_GITHUB_URL', 'https://github.com/tsilvas1712'),
         'linkedin_url' => env('SITE_LINKEDIN_URL', ''),
         'available' => '1',

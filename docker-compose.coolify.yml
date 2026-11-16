@@ -22,7 +22,7 @@ services:
       SITE_DOMAIN: "${SITE_DOMAIN:?Defina SITE_DOMAIN}"
       SITE_CONTACT_EMAIL: ${SITE_CONTACT_EMAIL:-contato@ntsistemasweb.com.br}
       SITE_NOTIFICATION_EMAIL: ${SITE_NOTIFICATION_EMAIL:-contato@ntsistemasweb.com.br}
-      SITE_WHATSAPP: ${SITE_WHATSAPP:-}
+      SITE_WHATSAPP: ${SITE_WHATSAPP:-5551995492191}
 
       DB_CONNECTION: pgsql
       DB_HOST: postgres
