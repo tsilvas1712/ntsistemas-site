@@ -12,14 +12,14 @@ services:
       APP_NAME: "NT Sistemas Web"
       APP_ENV: ${APP_ENV:-production}
       APP_DEBUG: "false"
-      APP_KEY: ${APP_KEY}
-      APP_URL: https://${SITE_DOMAIN}
+      APP_KEY: ${APP_KEY:?Defina APP_KEY (php artisan key:generate --show)}
+      APP_URL: https://${SITE_DOMAIN:?Defina SITE_DOMAIN (ex.: ntsistemasweb.com.br)}
       APP_TIMEZONE: America/Sao_Paulo
       APP_LOCALE: pt_BR
       LOG_CHANNEL: stderr
       LOG_LEVEL: ${LOG_LEVEL:-info}
 
-      SITE_DOMAIN: ${SITE_DOMAIN}
+      SITE_DOMAIN: ${SITE_DOMAIN:?Defina SITE_DOMAIN}
       SITE_CONTACT_EMAIL: ${SITE_CONTACT_EMAIL:-contato@ntsistemasweb.com.br}
       SITE_NOTIFICATION_EMAIL: ${SITE_NOTIFICATION_EMAIL:-contato@ntsistemasweb.com.br}
       SITE_WHATSAPP: ${SITE_WHATSAPP:-}
@@ -29,7 +29,7 @@ services:
       DB_PORT: 5432
       DB_DATABASE: ntsistemas
       DB_USERNAME: ntsistemas
-      DB_PASSWORD: ${DB_PASSWORD}
+      DB_PASSWORD: ${DB_PASSWORD:?Defina DB_PASSWORD}
 
       QUEUE_CONNECTION: sync
       CACHE_STORE: database
@@ -61,7 +61,7 @@ services:
     environment:
       POSTGRES_DB: ntsistemas
       POSTGRES_USER: ntsistemas
-      POSTGRES_PASSWORD: ${DB_PASSWORD}
+      POSTGRES_PASSWORD: ${DB_PASSWORD:?Defina DB_PASSWORD}
     volumes:
       - postgres-data:/var/lib/postgresql/data
     healthcheck:
