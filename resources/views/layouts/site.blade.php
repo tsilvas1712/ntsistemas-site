@@ -20,8 +20,8 @@
         <meta property="og:description" content="Seu sistema trava ou precisa ir para a web? Diagnóstico técnico com escopo e preço fechados, modernização e manutenção mensal." />
         <meta name="twitter:card" content="summary" />
         <script type="application/ld+json">{!! json_encode(array_filter([
-            '@context' => 'https://schema.org',
-            '@type' => 'ProfessionalService',
+            '@'.'context' => 'https://schema.org',
+            '@'.'type' => 'ProfessionalService',
             'name' => 'NT Sistemas Web',
             'url' => url('/'),
             'email' => $site['contact_email'],
