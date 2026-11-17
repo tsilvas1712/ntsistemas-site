@@ -29,15 +29,6 @@
                     <span class="flex items-center gap-1.5"><x-lucide-check class="size-4 text-emerald-400" /> Você fala direto com quem programa</span>
                     <span class="flex items-center gap-1.5"><x-lucide-check class="size-4 text-emerald-400" /> Sem vendor lock-in</span>
                 </p>
-                <dl class="mt-2 grid max-w-md grid-cols-3 gap-4 border-t border-slate-800 pt-6">
-                    @foreach ([['10+', 'anos de engenharia'], ['80+', 'projetos entregues'], ['99,9%', 'SLA de uptime']] as [$value, $label])
-                        <div>
-                            <dt class="sr-only">{{ $label }}</dt>
-                            <dd class="font-heading text-2xl font-bold text-white">{{ $value }}</dd>
-                            <dd class="text-xs text-slate-500">{{ $label }}</dd>
-                        </div>
-                    @endforeach
-                </dl>
             </div>
 
             {{-- Porta de entrada: diagnóstico técnico --}}
