@@ -54,7 +54,7 @@ class ContactsTest extends TestCase
     {
         $contact = Contact::where('email', 'rodrigo@fintech.com')->sole();
 
-        $this->get("/admin/contatos/{$contact->id}")->assertOk()->assertSee(['Rodrigo Almeida', 'FinTech XP', 'Resgate de sistema legado']);
+        $this->get("/admin/contatos/{$contact->id}")->assertOk()->assertSee(['Rodrigo Almeida', 'FinTech XP', 'Sistema travando ou sem ninguém para mexer']);
         $this->get('/admin/contatos/999999')->assertRedirect('/admin/contatos');
     }
 
