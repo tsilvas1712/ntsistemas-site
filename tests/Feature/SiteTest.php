@@ -50,6 +50,7 @@ class SiteTest extends TestCase
 
         $contact = Contact::sole();
         $this->assertSame(['legacy'], $contact->services);
+        $this->assertSame(['Sistema travando ou sem ninguém para mexer'], $contact->serviceLabels());
         $this->assertSame('novo', $contact->status->value);
         $this->assertSame('5551999990000', $contact->whatsappNumber());
 
@@ -127,5 +128,17 @@ class SiteTest extends TestCase
             ->set('whatsapp', 'abc')
             ->call('save')
             ->assertHasErrors(['contact_email', 'github_url', 'whatsapp']);
+    }
+
+    public function test_form_offers_the_current_services_and_old_contacts_keep_their_labels(): void
+    {
+        Livewire::test(ContactForm::class)
+            ->assertSee('Manutenção mensal')
+            ->assertSee('Levar um sistema antigo para a web')
+            ->assertDontSee('Redesign arquitetural')
+            ->call('toggleService', 'arch')
+            ->assertSet('services', []);
+
+        $this->assertSame(['Redesign arquitetural', 'Manutenção mensal'], (new Contact(['services' => ['arch', 'maintenance']]))->serviceLabels());
     }
 }

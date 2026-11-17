@@ -17,11 +17,18 @@ class Contact extends Model
 
     /** Serviços que o visitante pode marcar no formulário (chave => rótulo). */
     public const SERVICES = [
-        'legacy' => 'Resgate de sistema legado',
-        'bugs' => 'Bugs críticos e performance',
+        'legacy' => 'Sistema travando ou sem ninguém para mexer',
+        'bugs' => 'Bugs críticos e lentidão',
+        'web' => 'Levar um sistema antigo para a web',
+        'maintenance' => 'Manutenção mensal',
+        'new' => 'Sistema novo sob medida',
+        'devops' => 'Servidor, nuvem e deploy',
+    ];
+
+    /** Opções que saíram do formulário: só para exibir contatos antigos com o rótulo certo. */
+    public const RETIRED_SERVICES = [
         'arch' => 'Redesign arquitetural',
         'mvp' => 'Novo MVP / greenfield',
-        'devops' => 'DevOps e infraestrutura',
         'security' => 'Hardening de segurança',
     ];
 
@@ -42,7 +49,7 @@ class Contact extends Model
     public function serviceLabels(): array
     {
         return collect($this->services ?? [])
-            ->map(fn (string $key) => self::SERVICES[$key] ?? $key)
+            ->map(fn (string $key) => self::SERVICES[$key] ?? self::RETIRED_SERVICES[$key] ?? $key)
             ->values()
             ->all();
     }
