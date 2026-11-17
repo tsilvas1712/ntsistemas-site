@@ -26,6 +26,8 @@ class SiteTest extends TestCase
             ->assertSee('{"@context":"https://schema.org","@type":"ProfessionalService"', false)
             ->assertSee('contato@ntsistemasweb.com.br')
             ->assertSee('https://wa.me/5551995492191', false)
+            ->assertDontSee('projetos entregues')
+            ->assertDontSee('SLA de uptime')
             ->assertSeeLivewire(ContactForm::class);
     }
 
