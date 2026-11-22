@@ -110,6 +110,7 @@ class ContactForm extends Component
             ...$data,
             'ip' => request()->ip(),
             'user_agent' => substr((string) request()->userAgent(), 0, 255),
+            ...array_intersect_key((array) session('visit_source', []), array_flip(['utm_source', 'utm_medium', 'utm_campaign'])),
         ]);
 
         $this->notify($contact);

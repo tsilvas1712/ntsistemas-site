@@ -24,6 +24,15 @@ class TrackVisit
             $visit = Visit::record($request);
             $request->session()->put('visit_id', $visit->id);
 
+            // Primeira origem conhecida da sessão: vai junto se a pessoa mandar o formulário.
+            if (! $request->session()->has('visit_source') && ($visit->utm_source || $visit->referrer)) {
+                $request->session()->put('visit_source', [
+                    'utm_source' => $visit->utm_source ?? $visit->referrer,
+                    'utm_medium' => $visit->utm_source ? $visit->utm_medium : 'referral',
+                    'utm_campaign' => $visit->utm_campaign,
+                ]);
+            }
+
             // Limpeza ocasional dos acessos antigos, sem depender do agendador.
             if (random_int(1, 200) === 1) {
                 (new Visit)->pruneAll();

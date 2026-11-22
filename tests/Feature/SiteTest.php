@@ -25,10 +25,57 @@ class SiteTest extends TestCase
             ->assertSee('Assumimos, corrigimos e modernizamos.')
             ->assertSee('{"@context":"https://schema.org","@type":"ProfessionalService"', false)
             ->assertSee('contato@ntsistemasweb.com.br')
-            ->assertSee('https://wa.me/5551995492191', false)
+            ->assertSee('https://wa.me/5551920056949', false)
             ->assertDontSee('projetos entregues')
             ->assertDontSee('SLA de uptime')
             ->assertSeeLivewire(ContactForm::class);
+    }
+
+    public function test_home_speaks_to_business_owners_and_has_share_preview_and_faq_data(): void
+    {
+        $this->get('/')
+            ->assertOk()
+            ->assertSee('<meta property="og:image" content="'.asset('images/og-nt-sistemas-web.png').'" />', false)
+            ->assertSee('"@type":"FAQPage"', false)
+            ->assertSee('Quem vai cuidar do seu sistema')
+            ->assertSee(route('services.show', 'manutencao-de-sistemas'), false)
+            ->assertDontSee('Staff/Principal')
+            ->assertDontSee('SOLID')
+            ->assertDontSee('IA opcional');
+    }
+
+    public function test_service_page_renders_with_contact_form_and_is_in_the_sitemap(): void
+    {
+        $this->get(route('services.show', 'migracao-de-sistemas-desktop-para-web'))
+            ->assertOk()
+            ->assertSee('Seu sistema Delphi, VB ou Access na web, sem parar a empresa.')
+            ->assertSee('<title>Migração de sistema desktop (Delphi, VB, Access) para a web · NT Sistemas Web</title>', false)
+            ->assertSeeLivewire(ContactForm::class);
+
+        $this->get(route('sitemap'))
+            ->assertOk()
+            ->assertHeader('Content-Type', 'application/xml')
+            ->assertSee('<loc>'.route('services.show', 'diagnostico-de-sistema').'</loc>', false);
+    }
+
+    public function test_contact_keeps_the_campaign_that_brought_the_visitor(): void
+    {
+        Notification::fake();
+
+        $this->get('/?utm_source=linkedin&utm_medium=social&utm_campaign=post-1')->assertOk();
+        $this->get('/')->assertOk(); // visita seguinte, sem origem, não apaga a primeira
+
+        Livewire::test(ContactForm::class)
+            ->call('toggleService', 'legacy')
+            ->call('next')
+            ->set('name', 'Maria Silva')
+            ->set('email', 'maria@empresa.com')
+            ->set('message', 'Nosso sistema cai toda sexta-feira à tarde.')
+            ->call('submit')
+            ->assertHasNoErrors();
+
+        $contact = Contact::sole();
+        $this->assertSame(['linkedin', 'social', 'post-1'], [$contact->utm_source, $contact->utm_medium, $contact->utm_campaign]);
     }
 
     public function test_contact_form_saves_and_notifies(): void

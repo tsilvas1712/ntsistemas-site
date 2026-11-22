@@ -1,5 +1,19 @@
 @extends('layouts.site')
 
+@php($faq = App\Support\SiteContent::faq((string) $site['response_hours']))
+
+@push('head')
+    <script type="application/ld+json">{!! json_encode([
+        '@'.'context' => 'https://schema.org',
+        '@'.'type' => 'FAQPage',
+        'mainEntity' => array_map(fn (array $item) => [
+            '@'.'type' => 'Question',
+            'name' => $item[0],
+            'acceptedAnswer' => ['@'.'type' => 'Answer', 'text' => $item[1]],
+        ], $faq),
+    ], JSON_UNESCAPED_SLASHES | JSON_UNESCAPED_UNICODE | JSON_HEX_TAG) !!}</script>
+@endpush
+
 @section('content')
     {{-- Hero --}}
     <section id="inicio" class="relative overflow-hidden">
@@ -27,7 +41,7 @@
                 <p class="flex flex-wrap gap-x-5 gap-y-1 text-sm text-slate-400">
                     <span class="flex items-center gap-1.5"><x-lucide-check class="size-4 text-emerald-400" /> Resposta em até {{ $site['response_hours'] }}h</span>
                     <span class="flex items-center gap-1.5"><x-lucide-check class="size-4 text-emerald-400" /> Você fala direto com quem programa</span>
-                    <span class="flex items-center gap-1.5"><x-lucide-check class="size-4 text-emerald-400" /> Sem vendor lock-in</span>
+                    <span class="flex items-center gap-1.5"><x-lucide-check class="size-4 text-emerald-400" /> O sistema e os acessos são seus</span>
                 </p>
             </div>
 
@@ -61,73 +75,60 @@
     <section id="servicos" class="scroll-mt-16 border-t border-slate-800/70 bg-slate-900/40">
         <div class="mx-auto max-w-6xl px-4 py-16 md:py-20">
             <div class="mx-auto max-w-2xl text-center">
-                <h2 class="font-heading text-3xl font-bold tracking-tight text-white">O que construímos, corrigimos e escalamos</h2>
+                <h2 class="font-heading text-3xl font-bold tracking-tight text-white">O que fazemos pelo sistema da sua empresa</h2>
                 <p class="mt-3 text-slate-400">Para empresas que dependem de um sistema e não têm um time de TI para cuidar dele.</p>
             </div>
             <div class="mt-12 grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
                 @foreach ([
-                    ['git-branch', 'Modernização de sistemas legados', 'Assumimos o sistema que ninguém mais quer mexer, eliminamos gambiarras e levamos sistemas desktop (Delphi, VB, Access) e PHP antigo para a web, sem parar a operação.', ['Legado', 'Migração para web', 'Refactoring']],
-                    ['zap', 'Bugs críticos e performance', 'Debug forense em todo o stack: race conditions, vazamentos de memória e gargalos que seu time não conseguiu resolver.', ['Debug forense', 'Profiling', 'APM']],
-                    ['life-buoy', 'Manutenção mensal', 'Um plano mensal para o sistema que não pode parar: horas de suporte incluídas, monitoramento, backups e atualizações de segurança.', ['Suporte', 'Monitoramento', 'Backups']],
-                    ['code-xml', 'MVP e greenfield', 'Do quadro branco ao software em produção, com o stack certo (não o da moda) e CI/CD desde o primeiro dia.', ['MVP', 'Full-stack']],
-                    ['cloud', 'DevOps e infraestrutura', 'AWS, GCP e Digital Ocean, ou nuvem privada em qualquer VPS. Kubernetes, Coolify e deploys sem downtime.', ['Kubernetes', 'CI/CD', 'IaC']],
-                    ['shield-check', 'Hardening de segurança', 'Revisões baseadas em OWASP, preparação para pentest, gestão de secrets e SSDLC. Fechamos as brechas antes do incidente.', ['OWASP', 'LGPD', 'SSDLC']],
-                ] as [$icon, $title, $text, $tags])
+                    ['monitor-up', 'Sistema antigo para a web', 'Delphi, VB, Access ou PHP antigo levado para a web em etapas, com o sistema antigo funcionando até a troca. Sem parar a operação.', ['Delphi · VB · Access', 'PHP antigo', 'Em etapas'], 'migracao-de-sistemas-desktop-para-web'],
+                    ['zap', 'Sistema travando ou lento', 'Erro no fechamento do mês, lentidão no horário de pico, tela que trava: encontramos a causa e corrigimos, começando pelo que para a operação.', ['Correção', 'Desempenho'], 'diagnostico-de-sistema'],
+                    ['life-buoy', 'Manutenção mensal', 'Um plano mensal para o sistema que não pode parar: horas de suporte, monitoramento, backup com restauração testada e atualizações de segurança.', ['Suporte', 'Monitoramento', 'Backup testado'], 'manutencao-de-sistemas'],
+                    ['code-xml', 'Sistema novo sob medida', 'Quando faz sentido construir: começamos pelo essencial, colocamos em uso rápido e evoluímos junto com a sua equipe.', ['Sob medida', 'Web'], null],
+                    ['cloud', 'Servidor e hospedagem', 'Cuidamos de onde o sistema roda, na nuvem ou num servidor da empresa, com backup, monitoramento e atualizações. Os acessos ficam no nome da empresa.', ['Nuvem', 'Servidor próprio'], null],
+                    ['shield-check', 'Segurança e LGPD', 'Revisamos acessos, senhas e dados pessoais para fechar as brechas antes de um incidente.', ['LGPD', 'Acessos'], null],
+                ] as [$icon, $title, $text, $tags, $page])
                     <div class="group rounded-2xl bg-slate-900 p-6 ring-1 ring-slate-800 transition hover:-translate-y-0.5 hover:ring-indigo-500/50">
                         <span class="flex size-10 items-center justify-center rounded-xl bg-indigo-500/15 text-indigo-300"><x-dynamic-component :component="'lucide-'.$icon" class="size-5" /></span>
                         <h3 class="mt-4 font-heading font-semibold text-white">{{ $title }}</h3>
                         <p class="mt-1.5 text-sm text-slate-400">{{ $text }}</p>
                         <div class="mt-4 flex flex-wrap gap-1.5">
                             @foreach ($tags as $tag)
-                                <span class="rounded-md bg-slate-800 px-2 py-0.5 font-mono text-[0.7rem] text-slate-400">{{ $tag }}</span>
+                                <span class="rounded-md bg-slate-800 px-2 py-0.5 text-[0.7rem] text-slate-400">{{ $tag }}</span>
                             @endforeach
                         </div>
+                        @if ($page)
+                            <a href="{{ route('services.show', $page) }}" class="mt-4 inline-flex items-center gap-1 text-sm font-semibold text-indigo-300 hover:text-indigo-200">Saiba mais <x-lucide-arrow-right class="size-4" /></a>
+                        @endif
                     </div>
                 @endforeach
             </div>
         </div>
     </section>
 
-    {{-- Infraestrutura --}}
-    <section id="infraestrutura" class="mx-auto max-w-6xl scroll-mt-16 px-4 py-16 md:py-20">
-        <div class="grid items-center gap-10 lg:grid-cols-[1fr_1.2fr] lg:gap-14">
+    {{-- Quem sou --}}
+    <section id="quem-sou" class="mx-auto max-w-6xl scroll-mt-16 px-4 py-16 md:py-20">
+        <div class="grid items-center gap-10 rounded-3xl bg-slate-900 p-6 ring-1 ring-slate-800 md:grid-cols-[auto_1fr] md:p-10">
+            @if (file_exists(public_path('images/thiago.jpg')))
+                <img src="{{ asset('images/thiago.jpg') }}" alt="{{ config('site.owner_name') }}" width="160" height="160" class="size-32 rounded-2xl object-cover ring-1 ring-slate-700 md:size-40" />
+            @else
+                <span class="flex size-32 items-center justify-center rounded-2xl bg-indigo-600 font-heading text-4xl font-bold text-white md:size-40">{{ collect(explode(' ', config('site.owner_name')))->map(fn ($part) => mb_substr($part, 0, 1))->take(2)->implode('') }}</span>
+            @endif
             <div class="grid gap-4">
-                <span class="flex size-10 items-center justify-center rounded-xl bg-indigo-500/15 text-indigo-300"><x-lucide-server class="size-5" /></span>
-                <h2 class="font-heading text-3xl font-bold tracking-tight text-white">Você entrega código. Nós cuidamos do resto.</h2>
-                <p class="text-slate-400">
-                    Estruturamos projetos nas nuvens tradicionais e também construímos nuvens privadas a partir de qualquer VPS.
-                    Sem vendor lock-in: a infraestrutura fica sob o seu controle.
+                <p class="text-xs font-semibold tracking-wide text-indigo-300 uppercase">Quem vai cuidar do seu sistema</p>
+                <h2 class="font-heading text-3xl font-bold tracking-tight text-white">{{ config('site.owner_name') }}</h2>
+                <p class="max-w-2xl text-slate-400">
+                    Engenheiro de software há mais de 10 anos. Abri a NT Sistemas Web para cuidar de sistemas de empresas que não têm time de TI:
+                    assumo o que outra equipe deixou, corrijo, levo para a web e mantenho funcionando. Também construí e mantenho o NT Omni,
+                    um sistema de atendimento pelo WhatsApp para pequenos negócios, em produção.
                 </p>
-                <ul class="grid gap-2 text-sm text-slate-300 sm:grid-cols-2">
-                    @foreach (['AWS · GCP · Digital Ocean', 'Nuvem privada em qualquer VPS', 'Sem vendor lock-in', 'Clusters com auto-scaling', 'Backups e disaster recovery', 'Deploys sem downtime'] as $point)
-                        <li class="flex items-start gap-2"><x-lucide-check class="mt-0.5 size-4 shrink-0 text-emerald-400" /> {{ $point }}</li>
-                    @endforeach
-                </ul>
-            </div>
-
-            <div class="grid gap-4">
-                <div class="grid grid-cols-2 gap-3 sm:grid-cols-3">
-                    @foreach ([
-                        ['AWS', 'EC2, RDS, Lambda', '#FF9900'], ['Docker', 'Containers', '#2496ED'], ['Kubernetes', 'Orquestração', '#326CE5'],
-                        ['Terraform', 'IaC', '#7B42BC'], ['GitHub Actions', 'CI/CD', '#22c55e'], ['Prometheus', 'Observabilidade', '#E6522C'],
-                        ['Grafana', 'Dashboards', '#F46800'], ['PostgreSQL', 'Banco principal', '#6b9bd2'], ['Redis', 'Cache e filas', '#DC382D'],
-                    ] as [$name, $sub, $color])
-                        <div class="rounded-xl bg-slate-900 p-3.5 ring-1 ring-slate-800">
-                            <p class="flex items-center gap-2 text-sm font-semibold text-white"><span class="size-2 rounded-full" style="background: {{ $color }}"></span>{{ $name }}</p>
-                            <p class="mt-0.5 text-xs text-slate-500">{{ $sub }}</p>
-                        </div>
-                    @endforeach
-                </div>
-                <div class="rounded-xl bg-slate-900 p-4 ring-1 ring-slate-800">
-                    <p class="font-mono text-xs text-slate-500">// pipeline CI/CD</p>
-                    <div class="mt-3 flex flex-wrap items-center gap-1.5">
-                        @foreach (['Lint', 'Testes', 'Build', 'Security scan', 'Homologação', 'Smoke tests', 'Produção'] as $stage)
-                            <span class="flex items-center gap-1 rounded-md bg-emerald-500/10 px-2 py-1 text-xs font-medium text-emerald-300 ring-1 ring-emerald-500/20">
-                                <x-lucide-circle-check class="size-3.5" /> {{ $stage }}
-                            </span>
-                            @unless ($loop->last) <x-lucide-chevron-right class="size-3.5 text-slate-600" /> @endunless
-                        @endforeach
-                    </div>
+                <p class="text-slate-300">Você fala direto comigo, em português claro, do diagnóstico à manutenção.</p>
+                <div class="flex flex-wrap gap-3">
+                    @if ($site['linkedin_url'])
+                        <a href="{{ $site['linkedin_url'] }}" target="_blank" rel="noopener" class="inline-flex items-center gap-2 rounded-lg px-4 py-2 text-sm font-semibold text-slate-200 ring-1 ring-slate-700 hover:bg-slate-800"><x-lucide-linkedin class="size-4" /> LinkedIn</a>
+                    @endif
+                    @if ($site['github_url'])
+                        <a href="{{ $site['github_url'] }}" target="_blank" rel="noopener" class="inline-flex items-center gap-2 rounded-lg px-4 py-2 text-sm font-semibold text-slate-200 ring-1 ring-slate-700 hover:bg-slate-800"><x-lucide-github class="size-4" /> GitHub</a>
+                    @endif
                 </div>
             </div>
         </div>
@@ -138,9 +139,9 @@
         <h2 class="text-center font-heading text-3xl font-bold tracking-tight text-white">Como trabalhamos</h2>
         <div class="mt-12 grid gap-6 md:grid-cols-3">
             @foreach ([
-                ['search-code', 'Diagnóstico', 'Analisamos o código, a infraestrutura e o problema. Você recebe um relatório técnico direto, sem pitch de vendas.'],
-                ['map', 'Plano', 'Roadmap com prioridades, riscos e estimativa por sprint. Você sabe o que vai ser feito e quando.'],
-                ['rocket', 'Entrega', 'Sprints curtos, código revisado, deploys automáticos e relatórios transparentes até a produção.'],
+                ['search-code', 'Diagnóstico', 'Analisamos o código, o banco e o servidor. Você recebe um relatório em linguagem de negócio, com escopo, prazo e preço fechados.'],
+                ['map', 'Plano em etapas', 'O que manter, corrigir e reescrever, em ordem de risco. Cada etapa com prazo e preço, e você aprova uma de cada vez.'],
+                ['rocket', 'Entrega e manutenção', 'Entregas curtas que você acompanha de perto, e manutenção mensal para o sistema não voltar a parar.'],
             ] as $i => [$icon, $title, $text])
                 <div class="grid gap-3">
                     <span class="flex size-11 items-center justify-center rounded-full bg-indigo-600 font-heading font-bold text-white">{{ $i + 1 }}</span>
@@ -155,29 +156,37 @@
     <section id="por-que" class="scroll-mt-16 bg-indigo-50 text-slate-900">
         <div class="mx-auto grid max-w-6xl gap-10 px-4 py-16 md:py-20 lg:grid-cols-[1fr_1.2fr]">
             <div class="grid content-start gap-4">
-                <h2 class="font-heading text-3xl font-bold tracking-tight">Rigor de engenharia, pragmatismo de negócio.</h2>
-                <p class="text-slate-600">Trabalhamos no nível de Staff/Principal Engineer. Cada linha revisada, cada decisão documentada.</p>
-                <dl class="mt-2 grid gap-3 text-sm">
-                    @foreach ([
-                        ['Linguagens', 'PHP · TypeScript · Java · Go · Python'],
-                        ['Frameworks', 'Laravel · Livewire · React · Vue · Spring · NestJS'],
-                        ['Bancos', 'PostgreSQL · MySQL · MongoDB · Redis · Kafka'],
-                    ] as [$label, $value])
-                        <div class="rounded-xl bg-white p-4 ring-1 ring-indigo-100">
-                            <dt class="font-mono text-xs text-indigo-600">{{ $label }}</dt>
-                            <dd class="mt-1 font-medium">{{ $value }}</dd>
-                        </div>
-                    @endforeach
-                </dl>
+                <h2 class="font-heading text-3xl font-bold tracking-tight">Engenharia séria, conversa simples.</h2>
+                <p class="text-slate-600">Cada decisão explicada em termos de negócio: custo, risco e prazo. Sem jargão e sem surpresa na fatura.</p>
+                <details class="group mt-2 rounded-xl bg-white p-4 ring-1 ring-indigo-100">
+                    <summary class="flex cursor-pointer list-none items-center justify-between gap-3 text-sm font-semibold">
+                        Para equipes técnicas: tecnologias e infraestrutura
+                        <x-lucide-chevron-down class="size-4 shrink-0 text-slate-400 transition group-open:rotate-180" />
+                    </summary>
+                    <dl class="mt-3 grid gap-3 text-sm">
+                        @foreach ([
+                            ['Linguagens', 'PHP · TypeScript · Java · Go · Python · Delphi'],
+                            ['Frameworks', 'Laravel · Livewire · React · Vue · Spring · NestJS'],
+                            ['Bancos', 'PostgreSQL · MySQL · MongoDB · Redis'],
+                            ['Infraestrutura', 'AWS · GCP · Digital Ocean · VPS própria · Docker · Kubernetes · Coolify'],
+                            ['Qualidade', 'Testes automatizados · CI/CD · revisões de segurança (OWASP)'],
+                        ] as [$label, $value])
+                            <div>
+                                <dt class="font-mono text-xs text-indigo-600">{{ $label }}</dt>
+                                <dd class="mt-0.5 font-medium">{{ $value }}</dd>
+                            </div>
+                        @endforeach
+                    </dl>
+                </details>
             </div>
             <div class="grid gap-4 sm:grid-cols-2">
                 @foreach ([
-                    ['award', 'Padrão enterprise', 'Experiência de Staff Engineer com barra de qualidade alta.'],
-                    ['braces', 'Clean Code de verdade', 'SOLID e DRY como prática verificável, não só discurso.'],
-                    ['lock', 'Segurança primeiro', 'OWASP, RBAC, criptografia e sanitização por padrão.'],
-                    ['trending-up', 'Feito para escalar', 'Escalabilidade horizontal pensada desde o primeiro dia.'],
-                    ['calendar-check', 'Entrega previsível', 'Sprints, estimativas claras e relatórios transparentes.'],
-                    ['messages-square', 'Fala as duas línguas', 'Fluente em código e em contexto de negócio.'],
+                    ['messages-square', 'Sem intermediário', 'Você fala com quem programa, não com uma central de atendimento.'],
+                    ['file-check', 'Preço fechado', 'Diagnóstico e cada etapa com escopo, prazo e preço combinados antes de começar.'],
+                    ['database-backup', 'Backup testado', 'Não basta fazer backup: a restauração é testada, para o dia em que precisar.'],
+                    ['key-round', 'O sistema é seu', 'Código, dados, servidor e senhas ficam no nome da sua empresa. Sem prender ninguém.'],
+                    ['shield-check', 'Segurança por padrão', 'Acessos, senhas e dados pessoais protegidos, com atenção à LGPD.'],
+                    ['calendar-check', 'Entregas curtas', 'Você acompanha o progresso a cada uma ou duas semanas.'],
                 ] as [$icon, $title, $text])
                     <div class="rounded-2xl bg-white p-5 ring-1 ring-indigo-100">
                         <x-dynamic-component :component="'lucide-'.$icon" class="size-6 text-indigo-600" />
@@ -201,7 +210,7 @@
             <div class="grid gap-2">
                 <p class="font-mono text-xs text-indigo-300">Nosso produto</p>
                 <h2 class="font-heading text-2xl font-bold tracking-tight text-white">NT Omni: atendimento no WhatsApp que agenda, vende e responde.</h2>
-                <p class="text-slate-400">Central de atendimento com fluxos automáticos, agenda, funil de vendas e IA opcional. Feito pela NT Sistemas Web.</p>
+                <p class="text-slate-400">Atendimento no WhatsApp pronto para o tipo de negócio, com agenda, lembretes e funil de vendas. Construído e mantido pela NT Sistemas Web.</p>
             </div>
             <a href="https://nt-omni.com.br" target="_blank" rel="noopener" data-track="Saída: NT Omni" class="inline-flex items-center gap-2 justify-self-start rounded-lg px-5 py-3 font-semibold text-slate-200 ring-1 ring-slate-700 hover:bg-slate-800">
                 Conhecer <x-lucide-external-link class="size-4" />
@@ -214,15 +223,7 @@
         <div class="mx-auto max-w-3xl px-4 py-16 md:py-20">
             <h2 class="text-center font-heading text-3xl font-bold tracking-tight text-white">Perguntas frequentes</h2>
             <div class="mt-10 grid gap-3">
-                @foreach ([
-                    ['Vocês atendem empresas pequenas?', 'Sim. Boa parte dos clientes são pequenas e médias empresas que dependem de um sistema interno e não têm time de TI. Você fala direto com quem vai programar.'],
-                    ['Vocês pegam sistemas que outra equipe começou?', 'Sim, é boa parte do que fazemos. Começamos com um diagnóstico do código e da infraestrutura e dizemos com clareza o que vale manter, refatorar ou reescrever.'],
-                    ['Precisa parar o sistema para modernizar?', 'Não. A migração é feita em etapas, com o sistema rodando, testes automatizados e deploys sem downtime.'],
-                    ['Como funciona o orçamento?', 'Depois do diagnóstico você recebe um plano com escopo, sprints e valor. Também atendemos por hora em casos de emergência, como bugs em produção.'],
-                    ['Tem plano de manutenção mensal?', 'Sim. Um valor fixo por mês com horas de suporte, monitoramento, backups e atualizações. Bom para quem não pode ficar sem o sistema e não quer depender de um programador avulso.'],
-                    ['Vocês cuidam da infraestrutura depois da entrega?', 'Sim. Montamos a infraestrutura (AWS, GCP, Digital Ocean ou VPS própria com Kubernetes ou Coolify) e podemos acompanhar com monitoramento e manutenção.'],
-                    ['Em quanto tempo vocês respondem?', 'Em até '.$site['response_hours'].' horas úteis com uma avaliação técnica inicial. Mande pelo formulário abaixo.'],
-                ] as [$question, $answer])
+                @foreach ($faq as [$question, $answer])
                     <details class="group rounded-xl bg-slate-900 p-5 ring-1 ring-slate-800 open:ring-indigo-500/50">
                         <summary class="flex cursor-pointer list-none items-center justify-between gap-4 font-medium text-white">
                             {{ $question }}
@@ -250,7 +251,7 @@
                     </li>
                     @if ($site['whatsapp'])
                         <li>
-                            <a href="https://wa.me/{{ preg_replace('/\D+/', '', $site['whatsapp']) }}" target="_blank" rel="noopener" class="flex items-center gap-3 text-slate-300 hover:text-white">
+                            <a href="https://wa.me/{{ preg_replace('/\D+/', '', $site['whatsapp']) }}?text={{ rawurlencode('Oi! Vim pelo site da NT Sistemas Web e quero falar sobre um projeto.') }}" target="_blank" rel="noopener" class="flex items-center gap-3 text-slate-300 hover:text-white">
                                 <span class="flex size-9 items-center justify-center rounded-lg bg-emerald-500/15 text-emerald-300"><x-lucide-message-circle class="size-4" /></span>
                                 WhatsApp
                             </a>
