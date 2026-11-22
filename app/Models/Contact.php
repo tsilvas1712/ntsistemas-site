@@ -9,7 +9,7 @@ use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 
-#[Fillable(['name', 'email', 'phone', 'company', 'budget', 'stack', 'services', 'message', 'status', 'notes', 'ip', 'user_agent', 'replied_at'])]
+#[Fillable(['name', 'email', 'phone', 'company', 'budget', 'stack', 'services', 'message', 'status', 'notes', 'ip', 'user_agent', 'utm_source', 'utm_medium', 'utm_campaign', 'replied_at'])]
 class Contact extends Model
 {
     /** @use HasFactory<ContactFactory> */

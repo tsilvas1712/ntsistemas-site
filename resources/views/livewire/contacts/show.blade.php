@@ -6,7 +6,7 @@
                 / #{{ $contact->id }}
             </p>
             <h1 class="font-heading text-xl font-semibold">{{ $contact->name }}</h1>
-            <p class="text-sm text-muted-foreground">Recebido em {{ $contact->created_at->format('d/m/Y \à\s H:i') }}</p>
+            <p class="text-sm text-muted-foreground">Recebido em {{ $contact->created_at->format('d/m/Y \à\s H:i') }}@if ($contact->utm_source) · veio de <strong>{{ $contact->utm_source }}</strong>{{ $contact->utm_medium ? ' / '.$contact->utm_medium : '' }}{{ $contact->utm_campaign ? ' ('.$contact->utm_campaign.')' : '' }}@endif</p>
         </div>
         <x-contacts.status-badge :status="$contact->status" />
     </div>

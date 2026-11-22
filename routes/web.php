@@ -1,5 +1,6 @@
 <?php
 
+use App\Http\Controllers\SitePageController;
 use App\Http\Controllers\TrackClickController;
 use App\Http\Middleware\TrackVisit;
 use App\Livewire\Analytics;
@@ -8,6 +9,7 @@ use App\Livewire\Contacts;
 use App\Livewire\Dashboard;
 use App\Livewire\SiteSettings;
 use App\Livewire\Users;
+use App\Support\SiteContent;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Route;
@@ -24,6 +26,14 @@ if ($domain = config('site.domain')) {
 | Site público
 */
 Route::view('/', 'site.home')->middleware(TrackVisit::class)->name('home');
+
+// Páginas de serviço (uma por busca que o cliente faz no Google).
+Route::get('/servicos/{service}', [SitePageController::class, 'service'])
+    ->whereIn('service', array_keys(SiteContent::services()))
+    ->middleware(TrackVisit::class)
+    ->name('services.show');
+
+Route::get('/sitemap.xml', [SitePageController::class, 'sitemap'])->name('sitemap');
 
 // Cliques no site (enviados pelo navegador com sendBeacon).
 Route::post('/t/c', TrackClickController::class)->middleware('throttle:120,1')->name('track.click');
